@@ -21,42 +21,46 @@ app.use(function(req, res, next) {
 	next();
 });
 
-function acessoBanco (req, res, query, params) {
+function DBAccess(req, res, query, params) {
 	req.getConnection(function(err, connection) {
-		connection.query(query, params, function(err,result) {
+		f = connection.query(query, params, function(err,result) {
 			if(err) return res.status(400).json(err);
 			return res.status(200).json(result);
 		});
+		console.log(f.sql);
 	});
 }
 
 var routes = express.Router();
 routes.get('/user=*', function(req, res) {
-	acessoBanco(req, res, 'SELECT * FROM note where user = ?', [req.params[0]]);
+	DBAccess(req, res, 'SELECT * FROM note where user = ?', [req.params[0]]);
 });
 
 routes.get('/remove=*', function(req, res) {
-	acessoBanco(req, res, 'delete from note where idnote = ?', [req.params[0]]);
+	DBAccess(req, res, 'delete from note where idnote = ?', [req.params[0]]);
+});
+
+routes.post('/search', function(req, res) {
+	DBAccess(req, res, 'SELECT * FROM note where user = ? and (body like ? or title like ?);', [req.body.user, '%'+req.body.text+'%', '%'+req.body.text+'%']);
 });
 
 routes.post('/add', function(req, res) {
-	acessoBanco(req, res, 'INSERT INTO note SET ?', req.body);
+	DBAccess(req, res, 'INSERT INTO note SET ?', req.body);
 });
 
 routes.post('/changetitle', function(req, res) {
-	acessoBanco(req, res, 'update note set title = ? where idnote = ?', [req.body.title, req.body.idnote]);
+	DBAccess(req, res, 'update note set title = ? where idnote = ?', [req.body.title, req.body.idnote]);
 });
 
 routes.post('/changebody', function(req, res) {
-	acessoBanco(req, res, 'update note set body = ? where idnote = ?', [req.body.body, req.body.idnote]);
+	DBAccess(req, res, 'update note set body = ? where idnote = ?', [req.body.body, req.body.idnote]);
 });
 
 //Para usar o metodo POST
-app.use('/', express.static(__dirname + '/public_html'));
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: false }));
-app.use('/', routes);
 
+app.use('/', routes);
 
 app.set('port', process.env.PORT || 3001);
 
