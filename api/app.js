@@ -23,8 +23,9 @@ app.use(function(req, res, next) {
 
 function DBAccess(req, res, query, params) {
 	req.getConnection(function(err, connection) {
-		f = connection.query(query, params, function(err,result) {
-			if(err) return res.status(400).json(err);
+		if (err) return res.status(400).json(err);
+		f = connection.query(query, params, function(qErr, result) {
+			if(qErr) return res.status(400).json(qErr);
 			return res.status(200).json(result);
 		});
 		console.log(f.sql);
@@ -32,6 +33,11 @@ function DBAccess(req, res, query, params) {
 }
 
 var routes = express.Router();
+routes.get('/test', function(req, res) {
+	console.log("Um teste");
+	res.status(200).json('result');
+});
+
 routes.get('/user=*', function(req, res) {
 	DBAccess(req, res, 'SELECT * FROM note where user = ?', [req.params[0]]);
 });
